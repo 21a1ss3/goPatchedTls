@@ -39,8 +39,8 @@ import (
 	"unsafe"
 	_ "unsafe" // go:linkname
 
-	"github.com/21a1ss3/goTls/internal/bisect"
-	"github.com/21a1ss3/goTls/internal/godebugs"
+	"github.com/21a1ss3/advancedTls/internal/bisect"
+	"github.com/21a1ss3/advancedTls/internal/godebugs"
 )
 
 // A Setting is a single setting in the $GODEBUG environment variable.

@@ -12,7 +12,7 @@ import (
 
 	"hash"
 
-	"github.com/21a1ss3/goTls/internal/boring/sig"
+	"github.com/21a1ss3/advancedTls/internal/boring/sig"
 )
 
 const available = false

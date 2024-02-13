@@ -1,4 +1,4 @@
-module github.com/21a1ss3/goTls
+module github.com/21a1ss3/advancedTls
 
 go 1.21
 
