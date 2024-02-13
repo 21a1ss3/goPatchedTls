@@ -1442,7 +1442,7 @@ func (c *Certificate) leaf() (*x509.Certificate, error) {
 	return x509.ParseCertificate(c.Certificate[0])
 }
 
-type handshakeMessage interface {
+type HandshakeMessage interface {
 	marshal() ([]byte, error)
 	unmarshal([]byte) bool
 }

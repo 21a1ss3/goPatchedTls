@@ -29,8 +29,8 @@ import (
 type clientHandshakeState struct {
 	c            *Conn
 	ctx          context.Context
-	serverHello  *serverHelloMsg
-	hello        *clientHelloMsg
+	serverHello  *ServerHelloMsg
+	hello        *ClientHelloMsg
 	suite        *cipherSuite
 	finishedHash finishedHash
 	masterSecret []byte
@@ -40,7 +40,7 @@ type clientHandshakeState struct {
 
 var testingOnlyForceClientHelloSignatureAlgorithms []SignatureScheme
 
-func (c *Conn) makeClientHello() (*clientHelloMsg, *ecdh.PrivateKey, error) {
+func (c *Conn) makeClientHello() (*ClientHelloMsg, *ecdh.PrivateKey, error) {
 	config := c.config
 	if len(config.ServerName) == 0 && !config.InsecureSkipVerify {
 		return nil, nil, errors.New("tls: either ServerName or InsecureSkipVerify must be specified in the tls.Config")
@@ -71,7 +71,7 @@ func (c *Conn) makeClientHello() (*clientHelloMsg, *ecdh.PrivateKey, error) {
 		clientHelloVersion = VersionTLS12
 	}
 
-	hello := &clientHelloMsg{
+	hello := &ClientHelloMsg{
 		vers:                         clientHelloVersion,
 		compressionMethods:           []uint8{compressionNone},
 		random:                       make([]byte, 32),
@@ -221,12 +221,12 @@ func (c *Conn) clientHandshake(ctx context.Context) (err error) {
 	}
 
 	// serverHelloMsg is not included in the transcript
-	msg, err := c.readHandshake(nil)
+	msg, err := c.ReadHandshake(nil)
 	if err != nil {
 		return err
 	}
 
-	serverHello, ok := msg.(*serverHelloMsg)
+	serverHello, ok := msg.(*ServerHelloMsg)
 	if !ok {
 		c.sendAlert(alertUnexpectedMessage)
 		return unexpectedMessageError(serverHello, msg)
@@ -279,7 +279,7 @@ func (c *Conn) clientHandshake(ctx context.Context) (err error) {
 	return nil
 }
 
-func (c *Conn) loadSession(hello *clientHelloMsg) (
+func (c *Conn) loadSession(hello *ClientHelloMsg) (
 	session *SessionState, earlySecret, binderKey []byte, err error) {
 	if c.config.SessionTicketsDisabled || c.config.ClientSessionCache == nil {
 		return nil, nil, nil, nil
@@ -415,7 +415,7 @@ func (c *Conn) loadSession(hello *clientHelloMsg) (
 	return
 }
 
-func (c *Conn) pickTLSVersion(serverHello *serverHelloMsg) error {
+func (c *Conn) pickTLSVersion(serverHello *ServerHelloMsg) error {
 	peerVersion := serverHello.vers
 	if serverHello.supportedVersion != 0 {
 		peerVersion = serverHello.supportedVersion
@@ -538,22 +538,22 @@ func (hs *clientHandshakeState) pickCipherSuite() error {
 func (hs *clientHandshakeState) doFullHandshake() error {
 	c := hs.c
 
-	msg, err := c.readHandshake(&hs.finishedHash)
+	msg, err := c.ReadHandshake(&hs.finishedHash)
 	if err != nil {
 		return err
 	}
-	certMsg, ok := msg.(*certificateMsg)
+	certMsg, ok := msg.(*CertificateMsg)
 	if !ok || len(certMsg.certificates) == 0 {
 		c.sendAlert(alertUnexpectedMessage)
 		return unexpectedMessageError(certMsg, msg)
 	}
 
-	msg, err = c.readHandshake(&hs.finishedHash)
+	msg, err = c.ReadHandshake(&hs.finishedHash)
 	if err != nil {
 		return err
 	}
 
-	cs, ok := msg.(*certificateStatusMsg)
+	cs, ok := msg.(*CertificateStatusMsg)
 	if ok {
 		// RFC4366 on Certificate Status Request:
 		// The server MAY return a "certificate_status" message.
@@ -569,7 +569,7 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 
 		c.ocspResponse = cs.response
 
-		msg, err = c.readHandshake(&hs.finishedHash)
+		msg, err = c.ReadHandshake(&hs.finishedHash)
 		if err != nil {
 			return err
 		}
@@ -596,7 +596,7 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 
 	keyAgreement := hs.suite.ka(c.vers)
 
-	skx, ok := msg.(*serverKeyExchangeMsg)
+	skx, ok := msg.(*ServerKeyExchangeMsg)
 	if ok {
 		err = keyAgreement.processServerKeyExchange(c.config, hs.hello, hs.serverHello, c.peerCertificates[0], skx)
 		if err != nil {
@@ -604,7 +604,7 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 			return err
 		}
 
-		msg, err = c.readHandshake(&hs.finishedHash)
+		msg, err = c.ReadHandshake(&hs.finishedHash)
 		if err != nil {
 			return err
 		}
@@ -612,7 +612,7 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 
 	var chainToSend *Certificate
 	var certRequested bool
-	certReq, ok := msg.(*certificateRequestMsg)
+	certReq, ok := msg.(*CertificateRequestMsg)
 	if ok {
 		certRequested = true
 
@@ -622,13 +622,13 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 			return err
 		}
 
-		msg, err = c.readHandshake(&hs.finishedHash)
+		msg, err = c.ReadHandshake(&hs.finishedHash)
 		if err != nil {
 			return err
 		}
 	}
 
-	shd, ok := msg.(*serverHelloDoneMsg)
+	shd, ok := msg.(*ServerHelloDoneMsg)
 	if !ok {
 		c.sendAlert(alertUnexpectedMessage)
 		return unexpectedMessageError(shd, msg)
@@ -638,7 +638,7 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 	// Certificate message, even if it's empty because we don't have a
 	// certificate to send.
 	if certRequested {
-		certMsg = new(certificateMsg)
+		certMsg = new(CertificateMsg)
 		certMsg.certificates = chainToSend.Certificate
 		if _, err := hs.c.writeHandshakeRecord(certMsg, &hs.finishedHash); err != nil {
 			return err
@@ -670,7 +670,7 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 	}
 
 	if chainToSend != nil && len(chainToSend.Certificate) > 0 {
-		certVerify := &certificateVerifyMsg{}
+		certVerify := &CertificateVerifyMsg{}
 
 		key, ok := chainToSend.PrivateKey.(crypto.Signer)
 		if !ok {
@@ -855,11 +855,11 @@ func (hs *clientHandshakeState) readFinished(out []byte) error {
 	// finishedMsg is included in the transcript, but not until after we
 	// check the client version, since the state before this message was
 	// sent is used during verification.
-	msg, err := c.readHandshake(nil)
+	msg, err := c.ReadHandshake(nil)
 	if err != nil {
 		return err
 	}
-	serverFinished, ok := msg.(*finishedMsg)
+	serverFinished, ok := msg.(*FinishedMsg)
 	if !ok {
 		c.sendAlert(alertUnexpectedMessage)
 		return unexpectedMessageError(serverFinished, msg)
@@ -891,11 +891,11 @@ func (hs *clientHandshakeState) readSessionTicket() error {
 		return errors.New("tls: server sent unrequested session ticket")
 	}
 
-	msg, err := c.readHandshake(&hs.finishedHash)
+	msg, err := c.ReadHandshake(&hs.finishedHash)
 	if err != nil {
 		return err
 	}
-	sessionTicketMsg, ok := msg.(*newSessionTicketMsg)
+	sessionTicketMsg, ok := msg.(*NewSessionTicketMsg)
 	if !ok {
 		c.sendAlert(alertUnexpectedMessage)
 		return unexpectedMessageError(sessionTicketMsg, msg)
@@ -934,7 +934,7 @@ func (hs *clientHandshakeState) sendFinished(out []byte) error {
 		return err
 	}
 
-	finished := new(finishedMsg)
+	finished := new(FinishedMsg)
 	finished.verifyData = hs.finishedHash.clientSum(hs.masterSecret)
 	if _, err := hs.c.writeHandshakeRecord(finished, &hs.finishedHash); err != nil {
 		return err
@@ -1032,7 +1032,7 @@ func (c *Conn) verifyServerCertificate(certificates [][]byte) error {
 
 // certificateRequestInfoFromMsg generates a CertificateRequestInfo from a TLS
 // <= 1.2 CertificateRequest, making an effort to fill in missing information.
-func certificateRequestInfoFromMsg(ctx context.Context, vers uint16, certReq *certificateRequestMsg) *CertificateRequestInfo {
+func certificateRequestInfoFromMsg(ctx context.Context, vers uint16, certReq *CertificateRequestMsg) *CertificateRequestInfo {
 	cri := &CertificateRequestInfo{
 		AcceptableCAs: certReq.certificateAuthorities,
 		Version:       vers,

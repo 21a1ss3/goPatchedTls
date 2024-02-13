@@ -257,7 +257,7 @@ func TestQUICPostHandshakeClientAuthentication(t *testing.T) {
 		t.Fatalf("error during connection handshake: %v", err)
 	}
 
-	certReq := new(certificateRequestMsgTLS13)
+	certReq := new(CertificateRequestMsgTLS13)
 	certReq.ocspStapling = true
 	certReq.scts = true
 	certReq.supportedSignatureAlgorithms = supportedSignatureAlgorithms()
@@ -285,7 +285,7 @@ func TestQUICPostHandshakeKeyUpdate(t *testing.T) {
 		t.Fatalf("error during connection handshake: %v", err)
 	}
 
-	keyUpdate := new(keyUpdateMsg)
+	keyUpdate := new(KeyUpdateMsg)
 	keyUpdateBytes, err := keyUpdate.marshal()
 	if err != nil {
 		t.Fatal(err)

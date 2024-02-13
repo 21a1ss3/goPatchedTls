@@ -25,8 +25,8 @@ const maxClientPSKIdentities = 5
 type serverHandshakeStateTLS13 struct {
 	c               *Conn
 	ctx             context.Context
-	clientHello     *clientHelloMsg
-	hello           *serverHelloMsg
+	clientHello     *ClientHelloMsg
+	hello           *ServerHelloMsg
 	sentDummyCCS    bool
 	usingPSK        bool
 	earlyData       bool
@@ -90,7 +90,7 @@ func (hs *serverHandshakeStateTLS13) handshake() error {
 func (hs *serverHandshakeStateTLS13) processClientHello() error {
 	c := hs.c
 
-	hs.hello = new(serverHelloMsg)
+	hs.hello = new(ServerHelloMsg)
 
 	// TLS 1.3 froze the ServerHello.legacy_version field, and uses
 	// supported_versions instead. See RFC 8446, sections 4.1.3 and 4.2.1.
@@ -487,7 +487,7 @@ func (hs *serverHandshakeStateTLS13) doHelloRetryRequest(selectedGroup CurveID) 
 	hs.transcript.Write([]byte{typeMessageHash, 0, 0, uint8(len(chHash))})
 	hs.transcript.Write(chHash)
 
-	helloRetryRequest := &serverHelloMsg{
+	helloRetryRequest := &ServerHelloMsg{
 		vers:              hs.hello.vers,
 		random:            helloRetryRequestRandom,
 		sessionId:         hs.hello.sessionId,
@@ -506,12 +506,12 @@ func (hs *serverHandshakeStateTLS13) doHelloRetryRequest(selectedGroup CurveID) 
 	}
 
 	// clientHelloMsg is not included in the transcript.
-	msg, err := c.readHandshake(nil)
+	msg, err := c.ReadHandshake(nil)
 	if err != nil {
 		return err
 	}
 
-	clientHello, ok := msg.(*clientHelloMsg)
+	clientHello, ok := msg.(*ClientHelloMsg)
 	if !ok {
 		c.sendAlert(alertUnexpectedMessage)
 		return unexpectedMessageError(clientHello, msg)
@@ -539,7 +539,7 @@ func (hs *serverHandshakeStateTLS13) doHelloRetryRequest(selectedGroup CurveID) 
 // illegalClientHelloChange reports whether the two ClientHello messages are
 // different, with the exception of the changes allowed before and after a
 // HelloRetryRequest. See RFC 8446, Section 4.1.2.
-func illegalClientHelloChange(ch, ch1 *clientHelloMsg) bool {
+func illegalClientHelloChange(ch, ch1 *ClientHelloMsg) bool {
 	if len(ch.supportedVersions) != len(ch1.supportedVersions) ||
 		len(ch.cipherSuites) != len(ch1.cipherSuites) ||
 		len(ch.supportedCurves) != len(ch1.supportedCurves) ||
@@ -641,7 +641,7 @@ func (hs *serverHandshakeStateTLS13) sendServerParameters() error {
 		return err
 	}
 
-	encryptedExtensions := new(encryptedExtensionsMsg)
+	encryptedExtensions := new(EncryptedExtensionsMsg)
 	encryptedExtensions.alpnProtocol = c.clientProtocol
 
 	if c.quic != nil {
@@ -674,7 +674,7 @@ func (hs *serverHandshakeStateTLS13) sendServerCertificate() error {
 
 	if hs.requestClientCert() {
 		// Request a client certificate
-		certReq := new(certificateRequestMsgTLS13)
+		certReq := new(CertificateRequestMsgTLS13)
 		certReq.ocspStapling = true
 		certReq.scts = true
 		certReq.supportedSignatureAlgorithms = supportedSignatureAlgorithms()
@@ -687,7 +687,7 @@ func (hs *serverHandshakeStateTLS13) sendServerCertificate() error {
 		}
 	}
 
-	certMsg := new(certificateMsgTLS13)
+	certMsg := new(CertificateMsgTLS13)
 
 	certMsg.certificate = *hs.cert
 	certMsg.scts = hs.clientHello.scts && len(hs.cert.SignedCertificateTimestamps) > 0
@@ -697,7 +697,7 @@ func (hs *serverHandshakeStateTLS13) sendServerCertificate() error {
 		return err
 	}
 
-	certVerifyMsg := new(certificateVerifyMsg)
+	certVerifyMsg := new(CertificateVerifyMsg)
 	certVerifyMsg.hasSignatureAlgorithm = true
 	certVerifyMsg.signatureAlgorithm = hs.sigAlg
 
@@ -734,7 +734,7 @@ func (hs *serverHandshakeStateTLS13) sendServerCertificate() error {
 func (hs *serverHandshakeStateTLS13) sendServerFinished() error {
 	c := hs.c
 
-	finished := &finishedMsg{
+	finished := &FinishedMsg{
 		verifyData: hs.suite.finishedHash(c.out.trafficSecret, hs.transcript),
 	}
 
@@ -809,7 +809,7 @@ func (hs *serverHandshakeStateTLS13) sendSessionTickets() error {
 	c := hs.c
 
 	hs.clientFinished = hs.suite.finishedHash(c.in.trafficSecret, hs.transcript)
-	finishedMsg := &finishedMsg{
+	finishedMsg := &FinishedMsg{
 		verifyData: hs.clientFinished,
 	}
 	if err := transcriptMsg(finishedMsg, hs.transcript); err != nil {
@@ -835,7 +835,7 @@ func (c *Conn) sendSessionTicket(earlyData bool) error {
 	psk := suite.expandLabel(c.resumptionSecret, "resumption",
 		nil, suite.hash.Size())
 
-	m := new(newSessionTicketMsgTLS13)
+	m := new(NewSessionTicketMsgTLS13)
 
 	state, err := c.sessionState()
 	if err != nil {
@@ -901,12 +901,12 @@ func (hs *serverHandshakeStateTLS13) readClientCertificate() error {
 	// If we requested a client certificate, then the client must send a
 	// certificate message. If it's empty, no CertificateVerify is sent.
 
-	msg, err := c.readHandshake(hs.transcript)
+	msg, err := c.ReadHandshake(hs.transcript)
 	if err != nil {
 		return err
 	}
 
-	certMsg, ok := msg.(*certificateMsgTLS13)
+	certMsg, ok := msg.(*CertificateMsgTLS13)
 	if !ok {
 		c.sendAlert(alertUnexpectedMessage)
 		return unexpectedMessageError(certMsg, msg)
@@ -927,12 +927,12 @@ func (hs *serverHandshakeStateTLS13) readClientCertificate() error {
 		// certificateVerifyMsg is included in the transcript, but not until
 		// after we verify the handshake signature, since the state before
 		// this message was sent is used.
-		msg, err = c.readHandshake(nil)
+		msg, err = c.ReadHandshake(nil)
 		if err != nil {
 			return err
 		}
 
-		certVerify, ok := msg.(*certificateVerifyMsg)
+		certVerify, ok := msg.(*CertificateVerifyMsg)
 		if !ok {
 			c.sendAlert(alertUnexpectedMessage)
 			return unexpectedMessageError(certVerify, msg)
@@ -976,12 +976,12 @@ func (hs *serverHandshakeStateTLS13) readClientFinished() error {
 	c := hs.c
 
 	// finishedMsg is not included in the transcript.
-	msg, err := c.readHandshake(nil)
+	msg, err := c.ReadHandshake(nil)
 	if err != nil {
 		return err
 	}
 
-	finished, ok := msg.(*finishedMsg)
+	finished, ok := msg.(*FinishedMsg)
 	if !ok {
 		c.sendAlert(alertUnexpectedMessage)
 		return unexpectedMessageError(finished, msg)

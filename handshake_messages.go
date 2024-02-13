@@ -67,7 +67,7 @@ func readUint24LengthPrefixed(s *cryptobyte.String, out *[]byte) bool {
 	return s.ReadUint24LengthPrefixed((*cryptobyte.String)(out))
 }
 
-type clientHelloMsg struct {
+type ClientHelloMsg struct {
 	raw                              []byte
 	vers                             uint16
 	random                           []byte
@@ -97,7 +97,7 @@ type clientHelloMsg struct {
 	quicTransportParameters          []byte
 }
 
-func (m *clientHelloMsg) marshal() ([]byte, error) {
+func (m *ClientHelloMsg) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
 	}
@@ -317,7 +317,7 @@ func (m *clientHelloMsg) marshal() ([]byte, error) {
 // marshalWithoutBinders returns the ClientHello through the
 // PreSharedKeyExtension.identities field, according to RFC 8446, Section
 // 4.2.11.2. Note that m.pskBinders must be set to slices of the correct length.
-func (m *clientHelloMsg) marshalWithoutBinders() ([]byte, error) {
+func (m *ClientHelloMsg) marshalWithoutBinders() ([]byte, error) {
 	bindersLen := 2 // uint16 length prefix
 	for _, binder := range m.pskBinders {
 		bindersLen += 1 // uint8 length prefix
@@ -334,7 +334,7 @@ func (m *clientHelloMsg) marshalWithoutBinders() ([]byte, error) {
 // updateBinders updates the m.pskBinders field, if necessary updating the
 // cached marshaled representation. The supplied binders must have the same
 // length as the current m.pskBinders.
-func (m *clientHelloMsg) updateBinders(pskBinders [][]byte) error {
+func (m *ClientHelloMsg) updateBinders(pskBinders [][]byte) error {
 	if len(pskBinders) != len(m.pskBinders) {
 		return errors.New("tls: internal error: pskBinders length mismatch")
 	}
@@ -366,8 +366,8 @@ func (m *clientHelloMsg) updateBinders(pskBinders [][]byte) error {
 	return nil
 }
 
-func (m *clientHelloMsg) unmarshal(data []byte) bool {
-	*m = clientHelloMsg{raw: data}
+func (m *ClientHelloMsg) unmarshal(data []byte) bool {
+	*m = ClientHelloMsg{raw: data}
 	s := cryptobyte.String(data)
 
 	if !s.Skip(4) || // message type and uint24 length field
@@ -625,7 +625,7 @@ func (m *clientHelloMsg) unmarshal(data []byte) bool {
 	return true
 }
 
-type serverHelloMsg struct {
+type ServerHelloMsg struct {
 	raw                          []byte
 	vers                         uint16
 	random                       []byte
@@ -650,7 +650,7 @@ type serverHelloMsg struct {
 	selectedGroup CurveID
 }
 
-func (m *serverHelloMsg) marshal() ([]byte, error) {
+func (m *ServerHelloMsg) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
 	}
@@ -770,8 +770,8 @@ func (m *serverHelloMsg) marshal() ([]byte, error) {
 	return m.raw, err
 }
 
-func (m *serverHelloMsg) unmarshal(data []byte) bool {
-	*m = serverHelloMsg{raw: data}
+func (m *ServerHelloMsg) unmarshal(data []byte) bool {
+	*m = ServerHelloMsg{raw: data}
 	s := cryptobyte.String(data)
 
 	if !s.Skip(4) || // message type and uint24 length field
@@ -888,14 +888,14 @@ func (m *serverHelloMsg) unmarshal(data []byte) bool {
 	return true
 }
 
-type encryptedExtensionsMsg struct {
+type EncryptedExtensionsMsg struct {
 	raw                     []byte
 	alpnProtocol            string
 	quicTransportParameters []byte
 	earlyData               bool
 }
 
-func (m *encryptedExtensionsMsg) marshal() ([]byte, error) {
+func (m *EncryptedExtensionsMsg) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
 	}
@@ -934,8 +934,8 @@ func (m *encryptedExtensionsMsg) marshal() ([]byte, error) {
 	return m.raw, err
 }
 
-func (m *encryptedExtensionsMsg) unmarshal(data []byte) bool {
-	*m = encryptedExtensionsMsg{raw: data}
+func (m *EncryptedExtensionsMsg) unmarshal(data []byte) bool {
+	*m = EncryptedExtensionsMsg{raw: data}
 	s := cryptobyte.String(data)
 
 	var extensions cryptobyte.String
@@ -985,24 +985,24 @@ func (m *encryptedExtensionsMsg) unmarshal(data []byte) bool {
 	return true
 }
 
-type endOfEarlyDataMsg struct{}
+type EndOfEarlyDataMsg struct{}
 
-func (m *endOfEarlyDataMsg) marshal() ([]byte, error) {
+func (m *EndOfEarlyDataMsg) marshal() ([]byte, error) {
 	x := make([]byte, 4)
 	x[0] = typeEndOfEarlyData
 	return x, nil
 }
 
-func (m *endOfEarlyDataMsg) unmarshal(data []byte) bool {
+func (m *EndOfEarlyDataMsg) unmarshal(data []byte) bool {
 	return len(data) == 4
 }
 
-type keyUpdateMsg struct {
+type KeyUpdateMsg struct {
 	raw             []byte
 	updateRequested bool
 }
 
-func (m *keyUpdateMsg) marshal() ([]byte, error) {
+func (m *KeyUpdateMsg) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
 	}
@@ -1022,7 +1022,7 @@ func (m *keyUpdateMsg) marshal() ([]byte, error) {
 	return m.raw, err
 }
 
-func (m *keyUpdateMsg) unmarshal(data []byte) bool {
+func (m *KeyUpdateMsg) unmarshal(data []byte) bool {
 	m.raw = data
 	s := cryptobyte.String(data)
 
@@ -1042,7 +1042,7 @@ func (m *keyUpdateMsg) unmarshal(data []byte) bool {
 	return true
 }
 
-type newSessionTicketMsgTLS13 struct {
+type NewSessionTicketMsgTLS13 struct {
 	raw          []byte
 	lifetime     uint32
 	ageAdd       uint32
@@ -1051,7 +1051,7 @@ type newSessionTicketMsgTLS13 struct {
 	maxEarlyData uint32
 }
 
-func (m *newSessionTicketMsgTLS13) marshal() ([]byte, error) {
+func (m *NewSessionTicketMsgTLS13) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
 	}
@@ -1083,8 +1083,8 @@ func (m *newSessionTicketMsgTLS13) marshal() ([]byte, error) {
 	return m.raw, err
 }
 
-func (m *newSessionTicketMsgTLS13) unmarshal(data []byte) bool {
-	*m = newSessionTicketMsgTLS13{raw: data}
+func (m *NewSessionTicketMsgTLS13) unmarshal(data []byte) bool {
+	*m = NewSessionTicketMsgTLS13{raw: data}
 	s := cryptobyte.String(data)
 
 	var extensions cryptobyte.String
@@ -1124,7 +1124,7 @@ func (m *newSessionTicketMsgTLS13) unmarshal(data []byte) bool {
 	return true
 }
 
-type certificateRequestMsgTLS13 struct {
+type CertificateRequestMsgTLS13 struct {
 	raw                              []byte
 	ocspStapling                     bool
 	scts                             bool
@@ -1133,7 +1133,7 @@ type certificateRequestMsgTLS13 struct {
 	certificateAuthorities           [][]byte
 }
 
-func (m *certificateRequestMsgTLS13) marshal() ([]byte, error) {
+func (m *CertificateRequestMsgTLS13) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
 	}
@@ -1199,8 +1199,8 @@ func (m *certificateRequestMsgTLS13) marshal() ([]byte, error) {
 	return m.raw, err
 }
 
-func (m *certificateRequestMsgTLS13) unmarshal(data []byte) bool {
-	*m = certificateRequestMsgTLS13{raw: data}
+func (m *CertificateRequestMsgTLS13) unmarshal(data []byte) bool {
+	*m = CertificateRequestMsgTLS13{raw: data}
 	s := cryptobyte.String(data)
 
 	var context, extensions cryptobyte.String
@@ -1275,12 +1275,12 @@ func (m *certificateRequestMsgTLS13) unmarshal(data []byte) bool {
 	return true
 }
 
-type certificateMsg struct {
+type CertificateMsg struct {
 	raw          []byte
 	certificates [][]byte
 }
 
-func (m *certificateMsg) marshal() ([]byte, error) {
+func (m *CertificateMsg) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
 	}
@@ -1315,7 +1315,7 @@ func (m *certificateMsg) marshal() ([]byte, error) {
 	return m.raw, nil
 }
 
-func (m *certificateMsg) unmarshal(data []byte) bool {
+func (m *CertificateMsg) unmarshal(data []byte) bool {
 	if len(data) < 7 {
 		return false
 	}
@@ -1352,14 +1352,14 @@ func (m *certificateMsg) unmarshal(data []byte) bool {
 	return true
 }
 
-type certificateMsgTLS13 struct {
+type CertificateMsgTLS13 struct {
 	raw          []byte
 	certificate  Certificate
 	ocspStapling bool
 	scts         bool
 }
 
-func (m *certificateMsgTLS13) marshal() ([]byte, error) {
+func (m *CertificateMsgTLS13) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
 	}
@@ -1421,8 +1421,8 @@ func marshalCertificate(b *cryptobyte.Builder, certificate Certificate) {
 	})
 }
 
-func (m *certificateMsgTLS13) unmarshal(data []byte) bool {
-	*m = certificateMsgTLS13{raw: data}
+func (m *CertificateMsgTLS13) unmarshal(data []byte) bool {
+	*m = CertificateMsgTLS13{raw: data}
 	s := cryptobyte.String(data)
 
 	var context cryptobyte.String
@@ -1499,12 +1499,12 @@ func unmarshalCertificate(s *cryptobyte.String, certificate *Certificate) bool {
 	return true
 }
 
-type serverKeyExchangeMsg struct {
+type ServerKeyExchangeMsg struct {
 	raw []byte
 	key []byte
 }
 
-func (m *serverKeyExchangeMsg) marshal() ([]byte, error) {
+func (m *ServerKeyExchangeMsg) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
 	}
@@ -1520,7 +1520,7 @@ func (m *serverKeyExchangeMsg) marshal() ([]byte, error) {
 	return x, nil
 }
 
-func (m *serverKeyExchangeMsg) unmarshal(data []byte) bool {
+func (m *ServerKeyExchangeMsg) unmarshal(data []byte) bool {
 	m.raw = data
 	if len(data) < 4 {
 		return false
@@ -1529,12 +1529,12 @@ func (m *serverKeyExchangeMsg) unmarshal(data []byte) bool {
 	return true
 }
 
-type certificateStatusMsg struct {
+type CertificateStatusMsg struct {
 	raw      []byte
 	response []byte
 }
 
-func (m *certificateStatusMsg) marshal() ([]byte, error) {
+func (m *CertificateStatusMsg) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
 	}
@@ -1553,7 +1553,7 @@ func (m *certificateStatusMsg) marshal() ([]byte, error) {
 	return m.raw, err
 }
 
-func (m *certificateStatusMsg) unmarshal(data []byte) bool {
+func (m *CertificateStatusMsg) unmarshal(data []byte) bool {
 	m.raw = data
 	s := cryptobyte.String(data)
 
@@ -1567,24 +1567,24 @@ func (m *certificateStatusMsg) unmarshal(data []byte) bool {
 	return true
 }
 
-type serverHelloDoneMsg struct{}
+type ServerHelloDoneMsg struct{}
 
-func (m *serverHelloDoneMsg) marshal() ([]byte, error) {
+func (m *ServerHelloDoneMsg) marshal() ([]byte, error) {
 	x := make([]byte, 4)
 	x[0] = typeServerHelloDone
 	return x, nil
 }
 
-func (m *serverHelloDoneMsg) unmarshal(data []byte) bool {
+func (m *ServerHelloDoneMsg) unmarshal(data []byte) bool {
 	return len(data) == 4
 }
 
-type clientKeyExchangeMsg struct {
+type ClientKeyExchangeMsg struct {
 	raw        []byte
 	ciphertext []byte
 }
 
-func (m *clientKeyExchangeMsg) marshal() ([]byte, error) {
+func (m *ClientKeyExchangeMsg) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
 	}
@@ -1600,7 +1600,7 @@ func (m *clientKeyExchangeMsg) marshal() ([]byte, error) {
 	return x, nil
 }
 
-func (m *clientKeyExchangeMsg) unmarshal(data []byte) bool {
+func (m *ClientKeyExchangeMsg) unmarshal(data []byte) bool {
 	m.raw = data
 	if len(data) < 4 {
 		return false
@@ -1613,12 +1613,12 @@ func (m *clientKeyExchangeMsg) unmarshal(data []byte) bool {
 	return true
 }
 
-type finishedMsg struct {
+type FinishedMsg struct {
 	raw        []byte
 	verifyData []byte
 }
 
-func (m *finishedMsg) marshal() ([]byte, error) {
+func (m *FinishedMsg) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
 	}
@@ -1634,7 +1634,7 @@ func (m *finishedMsg) marshal() ([]byte, error) {
 	return m.raw, err
 }
 
-func (m *finishedMsg) unmarshal(data []byte) bool {
+func (m *FinishedMsg) unmarshal(data []byte) bool {
 	m.raw = data
 	s := cryptobyte.String(data)
 	return s.Skip(1) &&
@@ -1642,7 +1642,7 @@ func (m *finishedMsg) unmarshal(data []byte) bool {
 		s.Empty()
 }
 
-type certificateRequestMsg struct {
+type CertificateRequestMsg struct {
 	raw []byte
 	// hasSignatureAlgorithm indicates whether this message includes a list of
 	// supported signature algorithms. This change was introduced with TLS 1.2.
@@ -1653,7 +1653,7 @@ type certificateRequestMsg struct {
 	certificateAuthorities       [][]byte
 }
 
-func (m *certificateRequestMsg) marshal() ([]byte, error) {
+func (m *CertificateRequestMsg) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
 	}
@@ -1708,7 +1708,7 @@ func (m *certificateRequestMsg) marshal() ([]byte, error) {
 	return m.raw, nil
 }
 
-func (m *certificateRequestMsg) unmarshal(data []byte) bool {
+func (m *CertificateRequestMsg) unmarshal(data []byte) bool {
 	m.raw = data
 
 	if len(data) < 5 {
@@ -1784,14 +1784,14 @@ func (m *certificateRequestMsg) unmarshal(data []byte) bool {
 	return len(data) == 0
 }
 
-type certificateVerifyMsg struct {
+type CertificateVerifyMsg struct {
 	raw                   []byte
 	hasSignatureAlgorithm bool // format change introduced in TLS 1.2
 	signatureAlgorithm    SignatureScheme
 	signature             []byte
 }
 
-func (m *certificateVerifyMsg) marshal() ([]byte, error) {
+func (m *CertificateVerifyMsg) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
 	}
@@ -1812,7 +1812,7 @@ func (m *certificateVerifyMsg) marshal() ([]byte, error) {
 	return m.raw, err
 }
 
-func (m *certificateVerifyMsg) unmarshal(data []byte) bool {
+func (m *CertificateVerifyMsg) unmarshal(data []byte) bool {
 	m.raw = data
 	s := cryptobyte.String(data)
 
@@ -1827,12 +1827,12 @@ func (m *certificateVerifyMsg) unmarshal(data []byte) bool {
 	return readUint16LengthPrefixed(&s, &m.signature) && s.Empty()
 }
 
-type newSessionTicketMsg struct {
+type NewSessionTicketMsg struct {
 	raw    []byte
 	ticket []byte
 }
 
-func (m *newSessionTicketMsg) marshal() ([]byte, error) {
+func (m *NewSessionTicketMsg) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
 	}
@@ -1854,7 +1854,7 @@ func (m *newSessionTicketMsg) marshal() ([]byte, error) {
 	return m.raw, nil
 }
 
-func (m *newSessionTicketMsg) unmarshal(data []byte) bool {
+func (m *NewSessionTicketMsg) unmarshal(data []byte) bool {
 	m.raw = data
 
 	if len(data) < 10 {
@@ -1876,14 +1876,14 @@ func (m *newSessionTicketMsg) unmarshal(data []byte) bool {
 	return true
 }
 
-type helloRequestMsg struct {
+type HelloRequestMsg struct {
 }
 
-func (*helloRequestMsg) marshal() ([]byte, error) {
+func (*HelloRequestMsg) marshal() ([]byte, error) {
 	return []byte{typeHelloRequest, 0, 0, 0}, nil
 }
 
-func (*helloRequestMsg) unmarshal(data []byte) bool {
+func (*HelloRequestMsg) unmarshal(data []byte) bool {
 	return len(data) == 4
 }
 
@@ -1893,7 +1893,7 @@ type transcriptHash interface {
 
 // transcriptMsg is a helper used to marshal and hash messages which typically
 // are not written to the wire, and as such aren't hashed during Conn.writeRecord.
-func transcriptMsg(msg handshakeMessage, h transcriptHash) error {
+func transcriptMsg(msg HandshakeMessage, h transcriptHash) error {
 	data, err := msg.marshal()
 	if err != nil {
 		return err

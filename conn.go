@@ -1043,7 +1043,7 @@ func (c *Conn) writeRecordLocked(typ recordType, data []byte) (int, error) {
 // writeHandshakeRecord writes a handshake message to the connection and updates
 // the record layer state. If transcript is non-nil the marshalled message is
 // written to it.
-func (c *Conn) writeHandshakeRecord(msg handshakeMessage, transcript transcriptHash) (int, error) {
+func (c *Conn) writeHandshakeRecord(msg HandshakeMessage, transcript transcriptHash) (int, error) {
 	c.out.Lock()
 	defer c.out.Unlock()
 
@@ -1080,10 +1080,10 @@ func (c *Conn) readHandshakeBytes(n int) error {
 	return nil
 }
 
-// readHandshake reads the next handshake message from
+// ReadHandshake reads the next handshake message from
 // the record layer. If transcript is non-nil, the message
 // is written to the passed transcriptHash.
-func (c *Conn) readHandshake(transcript transcriptHash) (any, error) {
+func (c *Conn) ReadHandshake(transcript transcriptHash) (any, error) {
 	if err := c.readHandshakeBytes(4); err != nil {
 		return nil, err
 	}
@@ -1100,55 +1100,55 @@ func (c *Conn) readHandshake(transcript transcriptHash) (any, error) {
 	return c.unmarshalHandshakeMessage(data, transcript)
 }
 
-func (c *Conn) unmarshalHandshakeMessage(data []byte, transcript transcriptHash) (handshakeMessage, error) {
-	var m handshakeMessage
+func (c *Conn) unmarshalHandshakeMessage(data []byte, transcript transcriptHash) (HandshakeMessage, error) {
+	var m HandshakeMessage
 	switch data[0] {
 	case typeHelloRequest:
-		m = new(helloRequestMsg)
+		m = new(HelloRequestMsg)
 	case typeClientHello:
-		m = new(clientHelloMsg)
+		m = new(ClientHelloMsg)
 	case typeServerHello:
-		m = new(serverHelloMsg)
+		m = new(ServerHelloMsg)
 	case typeNewSessionTicket:
 		if c.vers == VersionTLS13 {
-			m = new(newSessionTicketMsgTLS13)
+			m = new(NewSessionTicketMsgTLS13)
 		} else {
-			m = new(newSessionTicketMsg)
+			m = new(NewSessionTicketMsg)
 		}
 	case typeCertificate:
 		if c.vers == VersionTLS13 {
-			m = new(certificateMsgTLS13)
+			m = new(CertificateMsgTLS13)
 		} else {
-			m = new(certificateMsg)
+			m = new(CertificateMsg)
 		}
 	case typeCertificateRequest:
 		if c.vers == VersionTLS13 {
-			m = new(certificateRequestMsgTLS13)
+			m = new(CertificateRequestMsgTLS13)
 		} else {
-			m = &certificateRequestMsg{
+			m = &CertificateRequestMsg{
 				hasSignatureAlgorithm: c.vers >= VersionTLS12,
 			}
 		}
 	case typeCertificateStatus:
-		m = new(certificateStatusMsg)
+		m = new(CertificateStatusMsg)
 	case typeServerKeyExchange:
-		m = new(serverKeyExchangeMsg)
+		m = new(ServerKeyExchangeMsg)
 	case typeServerHelloDone:
-		m = new(serverHelloDoneMsg)
+		m = new(ServerHelloDoneMsg)
 	case typeClientKeyExchange:
-		m = new(clientKeyExchangeMsg)
+		m = new(ClientKeyExchangeMsg)
 	case typeCertificateVerify:
-		m = &certificateVerifyMsg{
+		m = &CertificateVerifyMsg{
 			hasSignatureAlgorithm: c.vers >= VersionTLS12,
 		}
 	case typeFinished:
-		m = new(finishedMsg)
+		m = new(FinishedMsg)
 	case typeEncryptedExtensions:
-		m = new(encryptedExtensionsMsg)
+		m = new(EncryptedExtensionsMsg)
 	case typeEndOfEarlyData:
-		m = new(endOfEarlyDataMsg)
+		m = new(EndOfEarlyDataMsg)
 	case typeKeyUpdate:
-		m = new(keyUpdateMsg)
+		m = new(KeyUpdateMsg)
 	default:
 		return nil, c.in.setErrorLocked(c.sendAlert(alertUnexpectedMessage))
 	}
@@ -1241,12 +1241,12 @@ func (c *Conn) handleRenegotiation() error {
 		return errors.New("tls: internal error: unexpected renegotiation")
 	}
 
-	msg, err := c.readHandshake(nil)
+	msg, err := c.ReadHandshake(nil)
 	if err != nil {
 		return err
 	}
 
-	helloReq, ok := msg.(*helloRequestMsg)
+	helloReq, ok := msg.(*HelloRequestMsg)
 	if !ok {
 		c.sendAlert(alertUnexpectedMessage)
 		return unexpectedMessageError(helloReq, msg)
@@ -1287,7 +1287,7 @@ func (c *Conn) handlePostHandshakeMessage() error {
 		return c.handleRenegotiation()
 	}
 
-	msg, err := c.readHandshake(nil)
+	msg, err := c.ReadHandshake(nil)
 	if err != nil {
 		return err
 	}
@@ -1298,9 +1298,9 @@ func (c *Conn) handlePostHandshakeMessage() error {
 	}
 
 	switch msg := msg.(type) {
-	case *newSessionTicketMsgTLS13:
+	case *NewSessionTicketMsgTLS13:
 		return c.handleNewSessionTicket(msg)
-	case *keyUpdateMsg:
+	case *KeyUpdateMsg:
 		return c.handleKeyUpdate(msg)
 	}
 	// The QUIC layer is supposed to treat an unexpected post-handshake CertificateRequest
@@ -1311,7 +1311,7 @@ func (c *Conn) handlePostHandshakeMessage() error {
 	return fmt.Errorf("tls: received unexpected handshake message of type %T", msg)
 }
 
-func (c *Conn) handleKeyUpdate(keyUpdate *keyUpdateMsg) error {
+func (c *Conn) handleKeyUpdate(keyUpdate *KeyUpdateMsg) error {
 	if c.quic != nil {
 		c.sendAlert(alertUnexpectedMessage)
 		return c.in.setErrorLocked(errors.New("tls: received unexpected key update message"))
@@ -1329,7 +1329,7 @@ func (c *Conn) handleKeyUpdate(keyUpdate *keyUpdateMsg) error {
 		c.out.Lock()
 		defer c.out.Unlock()
 
-		msg := &keyUpdateMsg{}
+		msg := &KeyUpdateMsg{}
 		msgBytes, err := msg.marshal()
 		if err != nil {
 			return err

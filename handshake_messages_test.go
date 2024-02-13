@@ -17,29 +17,29 @@ import (
 	"time"
 )
 
-var tests = []handshakeMessage{
-	&clientHelloMsg{},
-	&serverHelloMsg{},
-	&finishedMsg{},
+var tests = []HandshakeMessage{
+	&ClientHelloMsg{},
+	&ServerHelloMsg{},
+	&FinishedMsg{},
 
-	&certificateMsg{},
-	&certificateRequestMsg{},
-	&certificateVerifyMsg{
+	&CertificateMsg{},
+	&CertificateRequestMsg{},
+	&CertificateVerifyMsg{
 		hasSignatureAlgorithm: true,
 	},
-	&certificateStatusMsg{},
-	&clientKeyExchangeMsg{},
-	&newSessionTicketMsg{},
-	&encryptedExtensionsMsg{},
-	&endOfEarlyDataMsg{},
-	&keyUpdateMsg{},
-	&newSessionTicketMsgTLS13{},
-	&certificateRequestMsgTLS13{},
-	&certificateMsgTLS13{},
+	&CertificateStatusMsg{},
+	&ClientKeyExchangeMsg{},
+	&NewSessionTicketMsg{},
+	&EncryptedExtensionsMsg{},
+	&EndOfEarlyDataMsg{},
+	&KeyUpdateMsg{},
+	&NewSessionTicketMsgTLS13{},
+	&CertificateRequestMsgTLS13{},
+	&CertificateMsgTLS13{},
 	&SessionState{},
 }
 
-func mustMarshal(t *testing.T, msg handshakeMessage) []byte {
+func mustMarshal(t *testing.T, msg HandshakeMessage) []byte {
 	t.Helper()
 	b, err := msg.marshal()
 	if err != nil {
@@ -65,7 +65,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 				break
 			}
 
-			m1 := v.Interface().(handshakeMessage)
+			m1 := v.Interface().(HandshakeMessage)
 			marshaled := mustMarshal(t, m1)
 			if !m.unmarshal(marshaled) {
 				t.Errorf("#%d failed to unmarshal %#v %x", i, m1, marshaled)
@@ -124,8 +124,8 @@ func randomString(n int, rand *rand.Rand) string {
 	return string(b)
 }
 
-func (*clientHelloMsg) Generate(rand *rand.Rand, size int) reflect.Value {
-	m := &clientHelloMsg{}
+func (*ClientHelloMsg) Generate(rand *rand.Rand, size int) reflect.Value {
+	m := &ClientHelloMsg{}
 	m.vers = uint16(rand.Intn(65536))
 	m.random = randomBytes(32, rand)
 	m.sessionId = randomBytes(rand.Intn(32), rand)
@@ -212,8 +212,8 @@ func (*clientHelloMsg) Generate(rand *rand.Rand, size int) reflect.Value {
 	return reflect.ValueOf(m)
 }
 
-func (*serverHelloMsg) Generate(rand *rand.Rand, size int) reflect.Value {
-	m := &serverHelloMsg{}
+func (*ServerHelloMsg) Generate(rand *rand.Rand, size int) reflect.Value {
+	m := &ServerHelloMsg{}
 	m.vers = uint16(rand.Intn(65536))
 	m.random = randomBytes(32, rand)
 	m.sessionId = randomBytes(rand.Intn(32), rand)
@@ -264,8 +264,8 @@ func (*serverHelloMsg) Generate(rand *rand.Rand, size int) reflect.Value {
 	return reflect.ValueOf(m)
 }
 
-func (*encryptedExtensionsMsg) Generate(rand *rand.Rand, size int) reflect.Value {
-	m := &encryptedExtensionsMsg{}
+func (*EncryptedExtensionsMsg) Generate(rand *rand.Rand, size int) reflect.Value {
+	m := &EncryptedExtensionsMsg{}
 
 	if rand.Intn(10) > 5 {
 		m.alpnProtocol = randomString(rand.Intn(32)+1, rand)
@@ -277,8 +277,8 @@ func (*encryptedExtensionsMsg) Generate(rand *rand.Rand, size int) reflect.Value
 	return reflect.ValueOf(m)
 }
 
-func (*certificateMsg) Generate(rand *rand.Rand, size int) reflect.Value {
-	m := &certificateMsg{}
+func (*CertificateMsg) Generate(rand *rand.Rand, size int) reflect.Value {
+	m := &CertificateMsg{}
 	numCerts := rand.Intn(20)
 	m.certificates = make([][]byte, numCerts)
 	for i := 0; i < numCerts; i++ {
@@ -287,8 +287,8 @@ func (*certificateMsg) Generate(rand *rand.Rand, size int) reflect.Value {
 	return reflect.ValueOf(m)
 }
 
-func (*certificateRequestMsg) Generate(rand *rand.Rand, size int) reflect.Value {
-	m := &certificateRequestMsg{}
+func (*CertificateRequestMsg) Generate(rand *rand.Rand, size int) reflect.Value {
+	m := &CertificateRequestMsg{}
 	m.certificateTypes = randomBytes(rand.Intn(5)+1, rand)
 	for i := 0; i < rand.Intn(100); i++ {
 		m.certificateAuthorities = append(m.certificateAuthorities, randomBytes(rand.Intn(15)+1, rand))
@@ -296,34 +296,34 @@ func (*certificateRequestMsg) Generate(rand *rand.Rand, size int) reflect.Value 
 	return reflect.ValueOf(m)
 }
 
-func (*certificateVerifyMsg) Generate(rand *rand.Rand, size int) reflect.Value {
-	m := &certificateVerifyMsg{}
+func (*CertificateVerifyMsg) Generate(rand *rand.Rand, size int) reflect.Value {
+	m := &CertificateVerifyMsg{}
 	m.hasSignatureAlgorithm = true
 	m.signatureAlgorithm = SignatureScheme(rand.Intn(30000))
 	m.signature = randomBytes(rand.Intn(15)+1, rand)
 	return reflect.ValueOf(m)
 }
 
-func (*certificateStatusMsg) Generate(rand *rand.Rand, size int) reflect.Value {
-	m := &certificateStatusMsg{}
+func (*CertificateStatusMsg) Generate(rand *rand.Rand, size int) reflect.Value {
+	m := &CertificateStatusMsg{}
 	m.response = randomBytes(rand.Intn(10)+1, rand)
 	return reflect.ValueOf(m)
 }
 
-func (*clientKeyExchangeMsg) Generate(rand *rand.Rand, size int) reflect.Value {
-	m := &clientKeyExchangeMsg{}
+func (*ClientKeyExchangeMsg) Generate(rand *rand.Rand, size int) reflect.Value {
+	m := &ClientKeyExchangeMsg{}
 	m.ciphertext = randomBytes(rand.Intn(1000)+1, rand)
 	return reflect.ValueOf(m)
 }
 
-func (*finishedMsg) Generate(rand *rand.Rand, size int) reflect.Value {
-	m := &finishedMsg{}
+func (*FinishedMsg) Generate(rand *rand.Rand, size int) reflect.Value {
+	m := &FinishedMsg{}
 	m.verifyData = randomBytes(12, rand)
 	return reflect.ValueOf(m)
 }
 
-func (*newSessionTicketMsg) Generate(rand *rand.Rand, size int) reflect.Value {
-	m := &newSessionTicketMsg{}
+func (*NewSessionTicketMsg) Generate(rand *rand.Rand, size int) reflect.Value {
+	m := &NewSessionTicketMsg{}
 	m.ticket = randomBytes(rand.Intn(4), rand)
 	return reflect.ValueOf(m)
 }
@@ -410,19 +410,19 @@ func (s *SessionState) unmarshal(b []byte) bool {
 	return true
 }
 
-func (*endOfEarlyDataMsg) Generate(rand *rand.Rand, size int) reflect.Value {
-	m := &endOfEarlyDataMsg{}
+func (*EndOfEarlyDataMsg) Generate(rand *rand.Rand, size int) reflect.Value {
+	m := &EndOfEarlyDataMsg{}
 	return reflect.ValueOf(m)
 }
 
-func (*keyUpdateMsg) Generate(rand *rand.Rand, size int) reflect.Value {
-	m := &keyUpdateMsg{}
+func (*KeyUpdateMsg) Generate(rand *rand.Rand, size int) reflect.Value {
+	m := &KeyUpdateMsg{}
 	m.updateRequested = rand.Intn(10) > 5
 	return reflect.ValueOf(m)
 }
 
-func (*newSessionTicketMsgTLS13) Generate(rand *rand.Rand, size int) reflect.Value {
-	m := &newSessionTicketMsgTLS13{}
+func (*NewSessionTicketMsgTLS13) Generate(rand *rand.Rand, size int) reflect.Value {
+	m := &NewSessionTicketMsgTLS13{}
 	m.lifetime = uint32(rand.Intn(500000))
 	m.ageAdd = uint32(rand.Intn(500000))
 	m.nonce = randomBytes(rand.Intn(100), rand)
@@ -433,8 +433,8 @@ func (*newSessionTicketMsgTLS13) Generate(rand *rand.Rand, size int) reflect.Val
 	return reflect.ValueOf(m)
 }
 
-func (*certificateRequestMsgTLS13) Generate(rand *rand.Rand, size int) reflect.Value {
-	m := &certificateRequestMsgTLS13{}
+func (*CertificateRequestMsgTLS13) Generate(rand *rand.Rand, size int) reflect.Value {
+	m := &CertificateRequestMsgTLS13{}
 	if rand.Intn(10) > 5 {
 		m.ocspStapling = true
 	}
@@ -456,8 +456,8 @@ func (*certificateRequestMsgTLS13) Generate(rand *rand.Rand, size int) reflect.V
 	return reflect.ValueOf(m)
 }
 
-func (*certificateMsgTLS13) Generate(rand *rand.Rand, size int) reflect.Value {
-	m := &certificateMsgTLS13{}
+func (*CertificateMsgTLS13) Generate(rand *rand.Rand, size int) reflect.Value {
+	m := &CertificateMsgTLS13{}
 	for i := 0; i < rand.Intn(2)+1; i++ {
 		m.certificate.Certificate = append(
 			m.certificate.Certificate, randomBytes(rand.Intn(500)+1, rand))
@@ -481,14 +481,14 @@ func TestRejectEmptySCTList(t *testing.T) {
 
 	var random [32]byte
 	sct := []byte{0x42, 0x42, 0x42, 0x42}
-	serverHello := &serverHelloMsg{
+	serverHello := &ServerHelloMsg{
 		vers:   VersionTLS12,
 		random: random[:],
 		scts:   [][]byte{sct},
 	}
 	serverHelloBytes := mustMarshal(t, serverHello)
 
-	var serverHelloCopy serverHelloMsg
+	var serverHelloCopy ServerHelloMsg
 	if !serverHelloCopy.unmarshal(serverHelloBytes) {
 		t.Fatal("Failed to unmarshal initial message")
 	}
@@ -524,14 +524,14 @@ func TestRejectEmptySCT(t *testing.T) {
 	// not be zero length.
 
 	var random [32]byte
-	serverHello := &serverHelloMsg{
+	serverHello := &ServerHelloMsg{
 		vers:   VersionTLS12,
 		random: random[:],
 		scts:   [][]byte{nil},
 	}
 	serverHelloBytes := mustMarshal(t, serverHello)
 
-	var serverHelloCopy serverHelloMsg
+	var serverHelloCopy ServerHelloMsg
 	if serverHelloCopy.unmarshal(serverHelloBytes) {
 		t.Fatal("Unmarshaled ServerHello with zero-length SCT")
 	}
@@ -542,7 +542,7 @@ func TestRejectDuplicateExtensions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to decode test ClientHello: %s", err)
 	}
-	var clientHelloCopy clientHelloMsg
+	var clientHelloCopy ClientHelloMsg
 	if clientHelloCopy.unmarshal(clientHelloBytes) {
 		t.Error("Unmarshaled ClientHello with duplicate extensions")
 	}
@@ -551,7 +551,7 @@ func TestRejectDuplicateExtensions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to decode test ServerHello: %s", err)
 	}
-	var serverHelloCopy serverHelloMsg
+	var serverHelloCopy ServerHelloMsg
 	if serverHelloCopy.unmarshal(serverHelloBytes) {
 		t.Fatal("Unmarshaled ServerHello with duplicate extensions")
 	}
