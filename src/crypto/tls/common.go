@@ -18,12 +18,14 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"internal/godebug"
+
 	"io"
 	"net"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/21a1ss3/goTls/internal/godebug"
 )
 
 const (

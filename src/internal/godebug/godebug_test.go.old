@@ -6,7 +6,6 @@ package godebug_test
 
 import (
 	"fmt"
-	. "internal/godebug"
 	"internal/race"
 	"internal/testenv"
 	"os"

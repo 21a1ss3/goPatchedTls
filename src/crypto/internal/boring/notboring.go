@@ -9,8 +9,10 @@ package boring
 import (
 	"crypto"
 	"crypto/cipher"
-	"crypto/internal/boring/sig"
+
 	"hash"
+
+	"github.com/21a1ss3/goTls/crypto/internal/boring/sig"
 )
 
 const available = false

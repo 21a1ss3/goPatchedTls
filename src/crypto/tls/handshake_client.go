@@ -17,12 +17,13 @@ import (
 	"errors"
 	"fmt"
 	"hash"
-	"internal/godebug"
 	"io"
 	"net"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/21a1ss3/goTls/internal/godebug"
 )
 
 type clientHandshakeState struct {

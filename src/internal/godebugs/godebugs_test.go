@@ -5,20 +5,20 @@
 package godebugs_test
 
 import (
-	"internal/godebugs"
-	"internal/testenv"
 	"os"
-	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/21a1ss3/goTls/internal/godebugs"
 )
 
 func TestAll(t *testing.T) {
 	data, err := os.ReadFile("../../../doc/godebug.md")
 	if err != nil {
-		if os.IsNotExist(err) && (testenv.Builder() == "" || runtime.GOOS != "linux") {
+		//TODO: think about fixing it
+		/*if os.IsNotExist(err) && (testenv.Builder() == "" || runtime.GOOS != "linux") {
 			t.Skip(err)
-		}
+		}//*/
 		t.Fatal(err)
 	}
 	doc := string(data)
