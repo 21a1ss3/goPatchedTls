@@ -97,6 +97,22 @@ type ClientHelloMsg struct {
 	quicTransportParameters          []byte
 }
 
+func cloneSlice[T any](array []T) []T {
+	tmp := make([]T, len(array))
+	copy(tmp, array)
+	return tmp
+}
+
+func (m *ClientHelloMsg) GetVersion() uint16 {
+	return m.vers
+}
+func (m *ClientHelloMsg) GetRandom() []byte {
+	return cloneSlice[byte](m.random)
+}
+func (m *ClientHelloMsg) GetServerName() string {
+	return m.serverName
+}
+
 func (m *ClientHelloMsg) marshal() ([]byte, error) {
 	if m.raw != nil {
 		return m.raw, nil
