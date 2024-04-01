@@ -4,7 +4,7 @@
 
 //go:build unix
 
-package advancedTls
+package goPatchedTls
 
 import (
 	"errors"

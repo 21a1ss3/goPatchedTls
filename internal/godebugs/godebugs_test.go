@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/21a1ss3/advancedTls/internal/godebugs"
+	"github.com/21a1ss3/goPatchedTls/internal/godebugs"
 )
 
 func TestAll(t *testing.T) {

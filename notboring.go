@@ -4,7 +4,7 @@
 
 //go:build !boringcrypto
 
-package advancedTls
+package goPatchedTls
 
 func needFIPS() bool { return false }
 

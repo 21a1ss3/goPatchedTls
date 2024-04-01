@@ -4,7 +4,7 @@
 
 //go:build boringcrypto
 
-package advancedTls
+package goPatchedTls
 
 import (
 	"crypto/internal/boring/fipstls"

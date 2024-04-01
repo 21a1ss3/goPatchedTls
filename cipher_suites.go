@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package advancedTls
+package goPatchedTls
 
 import (
 	"crypto"
@@ -17,7 +17,7 @@ import (
 	"hash"
 	"runtime"
 
-	"github.com/21a1ss3/advancedTls/internal/boring"
+	"github.com/21a1ss3/goPatchedTls/internal/boring"
 	"golang.org/x/crypto/chacha20poly1305"
 	"golang.org/x/sys/cpu"
 )

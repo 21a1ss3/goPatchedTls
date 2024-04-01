@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package advancedTls
+package goPatchedTls
 
 import (
 	"bytes"
@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/21a1ss3/advancedTls/internal/godebug"
+	"github.com/21a1ss3/goPatchedTls/internal/godebug"
 )
 
 type clientHandshakeState struct {

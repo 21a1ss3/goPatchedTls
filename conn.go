@@ -4,7 +4,7 @@
 
 // TLS low level connection and record layer
 
-package advancedTls
+package goPatchedTls
 
 import (
 	"bytes"
@@ -21,7 +21,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/21a1ss3/advancedTls/internal/godebug"
+	"github.com/21a1ss3/goPatchedTls/internal/godebug"
 )
 
 // A Conn represents a secured connection.
